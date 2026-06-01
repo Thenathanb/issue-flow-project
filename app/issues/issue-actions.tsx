@@ -3,7 +3,9 @@
 import { useState } from 'react'
 import NewIssueDialog from '@/components/new-issue-dialog'
 
-export default function IssueActions() {
+type User = { id: string; name: string | null }
+
+export default function IssueActions({ users }: { users: User[] }) {
   const [open, setOpen] = useState(false)
 
   return (
@@ -14,7 +16,7 @@ export default function IssueActions() {
       >
         New Issue
       </button>
-      {open && <NewIssueDialog onClose={() => setOpen(false)} />}
+      {open && <NewIssueDialog onClose={() => setOpen(false)} users={users} />}
     </>
   )
 }

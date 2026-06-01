@@ -3,6 +3,7 @@
 import { prisma } from './prisma'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
+import { signOut } from '@/lib/auth'
 
 const IssueSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters'),
@@ -13,9 +14,13 @@ const IssueSchema = z.object({
 })
 
 export type ActionState = {
-  errors?: Record<string, string[]>
+  errors?: Record<string, string[] | undefined>
   message?: string
   success?: boolean
+}
+
+export async function signOutAction(): Promise<void> {
+  await signOut({ redirectTo: '/login' })
 }
 
 export async function createIssue(
@@ -78,6 +83,7 @@ export async function updateIssue(
 
   revalidatePath('/issues')
   revalidatePath('/dashboard')
+  revalidatePath(`/issues/${id}`)
 
   return { success: true, message: 'Issue updated successfully' }
 }

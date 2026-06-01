@@ -1,10 +1,18 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { deleteIssue } from '@/lib/actions'
 import { toast } from 'sonner'
 
-export default function DeleteIssueButton({ id }: { id: string }) {
+export default function DeleteIssueButton({
+  id,
+  redirectTo,
+}: {
+  id: string
+  redirectTo?: string
+}) {
+  const router = useRouter()
   const [confirming, setConfirming] = useState(false)
   const [pending, setPending] = useState(false)
 
@@ -13,6 +21,9 @@ export default function DeleteIssueButton({ id }: { id: string }) {
     const result = await deleteIssue(id)
     if (result.success) {
       toast.success(result.message)
+      if (redirectTo) {
+        router.push(redirectTo)
+      }
     }
     setPending(false)
     setConfirming(false)

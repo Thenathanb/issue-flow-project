@@ -1,6 +1,10 @@
+export const revalidate = 30
+
 import { prisma } from '@/lib/prisma'
 import { Suspense } from 'react'
 import Link from 'next/link'
+import IssueActions from '@/app/issues/issue-actions'
+import DeleteIssueButton from '@/components/delete-issue-button'
 
 const ITEMS_PER_PAGE = 5
 
@@ -34,6 +38,7 @@ async function IssueTable({ searchParams }: { searchParams: SearchParams }) {
   ])
 
   const totalPages = Math.ceil(total / ITEMS_PER_PAGE)
+  const hasFilters = !!(searchParams.status || searchParams.priority)
 
   function sortUrl(column: string) {
     const newOrder = sort === column && order === 'asc' ? 'desc' : 'asc'
@@ -49,6 +54,19 @@ async function IssueTable({ searchParams }: { searchParams: SearchParams }) {
   function SortIcon({ column }: { column: string }) {
     if (sort !== column) return <span className="text-gray-300 ml-1">↕</span>
     return <span className="text-blue-500 ml-1">{order === 'asc' ? '↑' : '↓'}</span>
+  }
+
+  if (issues.length === 0) {
+    return (
+      <div className="bg-white border rounded-lg p-12 text-center">
+        <p className="text-gray-500 mb-3">No issues found</p>
+        {hasFilters && (
+          <Link href="/issues" className="text-sm text-blue-600 hover:underline">
+            Clear filters
+          </Link>
+        )}
+      </div>
+    )
   }
 
   return (
@@ -70,12 +88,20 @@ async function IssueTable({ searchParams }: { searchParams: SearchParams }) {
               <th className="text-left px-4 py-3 font-medium text-gray-600">
                 <Link href={sortUrl('createdAt')}>Created <SortIcon column="createdAt" /></Link>
               </th>
+              <th className="text-left px-4 py-3 font-medium text-gray-600">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
             {issues.map((issue) => (
               <tr key={issue.id} className="hover:bg-gray-50">
-                <td className="px-4 py-3 font-medium text-gray-900">{issue.title}</td>
+                <td className="px-4 py-3 font-medium">
+                  <Link
+                    href={`/issues/${issue.id}`}
+                    className="text-gray-900 hover:text-blue-600"
+                  >
+                    {issue.title}
+                  </Link>
+                </td>
                 <td className="px-4 py-3">
                   <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
                     issue.status === 'OPEN'
@@ -101,6 +127,9 @@ async function IssueTable({ searchParams }: { searchParams: SearchParams }) {
                 <td className="px-4 py-3 text-gray-600">{issue.assignedTo?.name ?? '—'}</td>
                 <td className="px-4 py-3 text-gray-400">
                   {new Date(issue.createdAt).toLocaleDateString()}
+                </td>
+                <td className="px-4 py-3">
+                  <DeleteIssueButton id={issue.id} />
                 </td>
               </tr>
             ))}
@@ -139,7 +168,7 @@ function IssueTableSkeleton() {
       <table className="w-full text-sm">
         <thead className="bg-gray-50 border-b">
           <tr>
-            {['Title', 'Status', 'Priority', 'Assigned To', 'Created'].map((h) => (
+            {['Title', 'Status', 'Priority', 'Assigned To', 'Created', 'Actions'].map((h) => (
               <th key={h} className="text-left px-4 py-3">
                 <div className="h-4 bg-gray-200 rounded w-16" />
               </th>
@@ -154,6 +183,7 @@ function IssueTableSkeleton() {
               <td className="px-4 py-3"><div className="h-5 bg-gray-100 rounded-full w-14" /></td>
               <td className="px-4 py-3"><div className="h-4 bg-gray-100 rounded w-24" /></td>
               <td className="px-4 py-3"><div className="h-4 bg-gray-100 rounded w-20" /></td>
+              <td className="px-4 py-3"><div className="h-4 bg-gray-100 rounded w-12" /></td>
             </tr>
           ))}
         </tbody>
@@ -167,7 +197,10 @@ export default async function IssuesPage({
 }: {
   searchParams: Promise<SearchParams>
 }) {
-  const params = await searchParams
+  const [params, users] = await Promise.all([
+    searchParams,
+    prisma.user.findMany({ select: { id: true, name: true } }),
+  ])
 
   function filterUrl(key: string, value: string) {
     const current = new URLSearchParams(params as any)
@@ -184,9 +217,7 @@ export default async function IssuesPage({
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-semibold text-gray-900">Issues</h2>
-        <button className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700">
-          New Issue
-        </button>
+        <IssueActions users={users} />
       </div>
 
       <div className="flex gap-2 mb-4 flex-wrap">
