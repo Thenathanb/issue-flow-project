@@ -1,10 +1,7 @@
-export const revalidate = 30
-
-import { prisma } from '@/lib/prisma'
-import { Suspense } from 'react'
 import Link from 'next/link'
 import IssueActions from '@/app/issues/issue-actions'
 import DeleteIssueButton from '@/components/delete-issue-button'
+import { issues, users, type StaticIssue } from '@/lib/static-data'
 
 const ITEMS_PER_PAGE = 5
 
@@ -16,26 +13,42 @@ type SearchParams = {
   order?: string
 }
 
-async function IssueTable({ searchParams }: { searchParams: SearchParams }) {
+function SortIcon({
+  column,
+  sort,
+  order,
+}: {
+  column: string
+  sort: string
+  order: 'asc' | 'desc'
+}) {
+  if (sort !== column) return <span className="text-gray-300 ml-1">↕</span>
+  return <span className="text-blue-500 ml-1">{order === 'asc' ? '↑' : '↓'}</span>
+}
+
+function IssueTable({ searchParams }: { searchParams: SearchParams }) {
   const page = Number(searchParams.page) || 1
   const sort = searchParams.sort || 'createdAt'
   const order = (searchParams.order || 'desc') as 'asc' | 'desc'
 
-  const where = {
-    ...(searchParams.status && { status: searchParams.status as any }),
-    ...(searchParams.priority && { priority: searchParams.priority as any }),
-  }
+  const filteredIssues = issues.filter((issue) => {
+    const matchesStatus = searchParams.status ? issue.status === searchParams.status : true
+    const matchesPriority = searchParams.priority ? issue.priority === searchParams.priority : true
 
-  const [issues, total] = await Promise.all([
-    prisma.issue.findMany({
-      where,
-      orderBy: { [sort]: order },
-      skip: (page - 1) * ITEMS_PER_PAGE,
-      take: ITEMS_PER_PAGE,
-      include: { assignedTo: true, createdBy: true },
-    }),
-    prisma.issue.count({ where }),
-  ])
+    return matchesStatus && matchesPriority
+  })
+  const sortedIssues = [...filteredIssues].sort((a, b) => {
+    const first = a[sort as keyof StaticIssue]
+    const second = b[sort as keyof StaticIssue]
+    const firstValue = typeof first === 'string' ? first : String(first ?? '')
+    const secondValue = typeof second === 'string' ? second : String(second ?? '')
+
+    return order === 'asc'
+      ? firstValue.localeCompare(secondValue)
+      : secondValue.localeCompare(firstValue)
+  })
+  const total = filteredIssues.length
+  const paginatedIssues = sortedIssues.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE)
 
   const totalPages = Math.ceil(total / ITEMS_PER_PAGE)
   const hasFilters = !!(searchParams.status || searchParams.priority)
@@ -51,12 +64,7 @@ async function IssueTable({ searchParams }: { searchParams: SearchParams }) {
     return `/issues?${params.toString()}`
   }
 
-  function SortIcon({ column }: { column: string }) {
-    if (sort !== column) return <span className="text-gray-300 ml-1">↕</span>
-    return <span className="text-blue-500 ml-1">{order === 'asc' ? '↑' : '↓'}</span>
-  }
-
-  if (issues.length === 0) {
+  if (paginatedIssues.length === 0) {
     return (
       <div className="bg-white border rounded-lg p-12 text-center">
         <p className="text-gray-500 mb-3">No issues found</p>
@@ -76,23 +84,23 @@ async function IssueTable({ searchParams }: { searchParams: SearchParams }) {
           <thead className="bg-gray-50 border-b">
             <tr>
               <th className="text-left px-4 py-3 font-medium text-gray-600">
-                <Link href={sortUrl('title')}>Title <SortIcon column="title" /></Link>
+                <Link href={sortUrl('title')}>Title <SortIcon column="title" sort={sort} order={order} /></Link>
               </th>
               <th className="text-left px-4 py-3 font-medium text-gray-600">
-                <Link href={sortUrl('status')}>Status <SortIcon column="status" /></Link>
+                <Link href={sortUrl('status')}>Status <SortIcon column="status" sort={sort} order={order} /></Link>
               </th>
               <th className="text-left px-4 py-3 font-medium text-gray-600">
-                <Link href={sortUrl('priority')}>Priority <SortIcon column="priority" /></Link>
+                <Link href={sortUrl('priority')}>Priority <SortIcon column="priority" sort={sort} order={order} /></Link>
               </th>
               <th className="text-left px-4 py-3 font-medium text-gray-600">Assigned To</th>
               <th className="text-left px-4 py-3 font-medium text-gray-600">
-                <Link href={sortUrl('createdAt')}>Created <SortIcon column="createdAt" /></Link>
+                <Link href={sortUrl('createdAt')}>Created <SortIcon column="createdAt" sort={sort} order={order} /></Link>
               </th>
               <th className="text-left px-4 py-3 font-medium text-gray-600">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {issues.map((issue) => (
+            {paginatedIssues.map((issue) => (
               <tr key={issue.id} className="hover:bg-gray-50">
                 <td className="px-4 py-3 font-medium">
                   <Link
@@ -162,48 +170,11 @@ async function IssueTable({ searchParams }: { searchParams: SearchParams }) {
   )
 }
 
-function IssueTableSkeleton() {
-  return (
-    <div className="bg-white border rounded-lg overflow-hidden animate-pulse">
-      <table className="w-full text-sm">
-        <thead className="bg-gray-50 border-b">
-          <tr>
-            {['Title', 'Status', 'Priority', 'Assigned To', 'Created', 'Actions'].map((h) => (
-              <th key={h} className="text-left px-4 py-3">
-                <div className="h-4 bg-gray-200 rounded w-16" />
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-gray-100">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <tr key={i}>
-              <td className="px-4 py-3"><div className="h-4 bg-gray-100 rounded w-48" /></td>
-              <td className="px-4 py-3"><div className="h-5 bg-gray-100 rounded-full w-16" /></td>
-              <td className="px-4 py-3"><div className="h-5 bg-gray-100 rounded-full w-14" /></td>
-              <td className="px-4 py-3"><div className="h-4 bg-gray-100 rounded w-24" /></td>
-              <td className="px-4 py-3"><div className="h-4 bg-gray-100 rounded w-20" /></td>
-              <td className="px-4 py-3"><div className="h-4 bg-gray-100 rounded w-12" /></td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  )
-}
-
-export default async function IssuesPage({
-  searchParams,
-}: {
-  searchParams: Promise<SearchParams>
-}) {
-  const [params, users] = await Promise.all([
-    searchParams,
-    prisma.user.findMany({ select: { id: true, name: true } }),
-  ])
+export default function IssuesPage() {
+  const params: SearchParams = {}
 
   function filterUrl(key: string, value: string) {
-    const current = new URLSearchParams(params as any)
+    const current = new URLSearchParams(Object.entries(params).filter(([, value]) => value))
     if (current.get(key) === value) {
       current.delete(key)
     } else {
@@ -251,9 +222,7 @@ export default async function IssuesPage({
         ))}
       </div>
 
-      <Suspense fallback={<IssueTableSkeleton />}>
-        <IssueTable searchParams={params} />
-      </Suspense>
+      <IssueTable searchParams={params} />
     </div>
   )
 }

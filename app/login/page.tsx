@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 
 export default function LoginPage() {
@@ -16,20 +15,14 @@ export default function LoginPage() {
     setLoading(true)
     setError('')
 
-    const result = await signIn('credentials', {
-      email,
-      password,
-      redirect: false,
-    })
-
-    if (result?.error) {
+    if (!email || !password) {
       setError('Invalid email or password')
       setLoading(false)
       return
     }
 
+    await new Promise((resolve) => setTimeout(resolve, 250))
     router.push('/dashboard')
-    router.refresh()
   }
 
   return (
@@ -83,7 +76,7 @@ export default function LoginPage() {
         </form>
 
         <p className="text-xs text-gray-400 mt-6 text-center">
-          Use alice@example.com / password123
+          Static demo build for GitHub Pages
         </p>
       </div>
     </div>

@@ -16,6 +16,23 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+## GitHub Pages
+
+This project is configured for GitHub Pages with a static Next.js export. The deployed Pages build uses static demo data because GitHub Pages cannot run NextAuth, Prisma, middleware, API routes, or server actions.
+
+To deploy:
+
+1. Push this project to GitHub on the `main` branch.
+2. In the repository settings, open **Pages**.
+3. Set **Source** to **GitHub Actions**.
+4. Push a commit or run the `Deploy to GitHub Pages` workflow manually.
+
+The static files are generated into the `out` directory by:
+
+```bash
+npm run build
+```
+
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.

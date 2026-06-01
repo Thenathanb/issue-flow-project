@@ -1,9 +1,11 @@
-export const revalidate = 0
-
-import { prisma } from '@/lib/prisma'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import IssueDetailActions from '@/app/issues/[id]/issue-detail-actions'
+import { issues, users } from '@/lib/static-data'
+
+export function generateStaticParams() {
+  return issues.map((issue) => ({ id: issue.id }))
+}
 
 export default async function IssueDetailPage({
   params,
@@ -12,13 +14,7 @@ export default async function IssueDetailPage({
 }) {
   const { id } = await params
 
-  const [issue, users] = await Promise.all([
-    prisma.issue.findUnique({
-      where: { id },
-      include: { assignedTo: true, createdBy: true },
-    }),
-    prisma.user.findMany({ select: { id: true, name: true } }),
-  ])
+  const issue = issues.find((issue) => issue.id === id)
 
   if (!issue) notFound()
 

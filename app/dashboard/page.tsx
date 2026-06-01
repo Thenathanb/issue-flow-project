@@ -1,25 +1,18 @@
-export const revalidate = 60
-
-import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
 import IssueCharts from '@/app/dashboard/charts'
+import { issues } from '@/lib/static-data'
 
-export default async function DashboardPage() {
-  const [total, open, inProgress, closed, lowCount, mediumCount, highCount, recent] =
-    await Promise.all([
-      prisma.issue.count(),
-      prisma.issue.count({ where: { status: 'OPEN' } }),
-      prisma.issue.count({ where: { status: 'IN_PROGRESS' } }),
-      prisma.issue.count({ where: { status: 'CLOSED' } }),
-      prisma.issue.count({ where: { priority: 'LOW' } }),
-      prisma.issue.count({ where: { priority: 'MEDIUM' } }),
-      prisma.issue.count({ where: { priority: 'HIGH' } }),
-      prisma.issue.findMany({
-        orderBy: { createdAt: 'desc' },
-        take: 5,
-        include: { assignedTo: true },
-      }),
-    ])
+export default function DashboardPage() {
+  const total = issues.length
+  const open = issues.filter((issue) => issue.status === 'OPEN').length
+  const inProgress = issues.filter((issue) => issue.status === 'IN_PROGRESS').length
+  const closed = issues.filter((issue) => issue.status === 'CLOSED').length
+  const lowCount = issues.filter((issue) => issue.priority === 'LOW').length
+  const mediumCount = issues.filter((issue) => issue.priority === 'MEDIUM').length
+  const highCount = issues.filter((issue) => issue.priority === 'HIGH').length
+  const recent = [...issues]
+    .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt))
+    .slice(0, 5)
 
   const statusData = [
     { name: 'Open', value: open, color: '#3b82f6' },

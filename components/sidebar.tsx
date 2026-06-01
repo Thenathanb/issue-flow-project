@@ -2,10 +2,12 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { signOutAction } from '@/lib/actions'
-import type { Session } from 'next-auth'
 
-export default function Sidebar({ user }: { user: Session['user'] }) {
+type SidebarUser = {
+  name?: string | null
+}
+
+export default function Sidebar({ user }: { user: SidebarUser }) {
   const pathname = usePathname()
 
   return (
@@ -44,14 +46,12 @@ export default function Sidebar({ user }: { user: Session['user'] }) {
           </div>
           <span className="text-sm text-gray-700 truncate">{user?.name}</span>
         </div>
-        <form action={signOutAction}>
-          <button
-            type="submit"
-            className="w-full text-left px-3 py-2 text-sm text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-md"
-          >
-            Sign out
-          </button>
-        </form>
+        <Link
+          href="/login"
+          className="block px-3 py-2 text-sm text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-md"
+        >
+          Sign out
+        </Link>
       </div>
     </aside>
   )

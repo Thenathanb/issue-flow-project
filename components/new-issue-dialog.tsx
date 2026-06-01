@@ -1,13 +1,9 @@
 'use client'
 
-import { useActionState, useEffect, useState } from 'react'
-import { createPortal } from 'react-dom'
-import { createIssue, ActionState } from '@/lib/actions'
+import { useState } from 'react'
 import { toast } from 'sonner'
 
 type User = { id: string; name: string | null }
-
-const initialState: ActionState = {}
 
 export default function NewIssueDialog({
   onClose,
@@ -16,23 +12,17 @@ export default function NewIssueDialog({
   onClose: () => void
   users: User[]
 }) {
-  const [state, formAction, pending] = useActionState(createIssue, initialState)
-  const [mounted, setMounted] = useState(false)
+  const [pending, setPending] = useState(false)
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setPending(true)
+    await new Promise((resolve) => setTimeout(resolve, 250))
+    toast.success('Issue created in demo mode')
+    setPending(false)
+    onClose()
+  }
 
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  useEffect(() => {
-    if (state.success) {
-      toast.success(state.message)
-      onClose()
-    }
-  }, [state.success, state.message, onClose])
-
-  if (!mounted) return null
-
-  const content = (
+  return (
     <div
       className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
       onClick={(e) => e.target === e.currentTarget && onClose()}
@@ -48,13 +38,7 @@ export default function NewIssueDialog({
           </button>
         </div>
 
-        {state.message && !state.success && (
-          <p className="text-sm text-red-600 mb-4 bg-red-50 px-3 py-2 rounded">
-            {state.message}
-          </p>
-        )}
-
-        <form action={formAction} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
             <input
@@ -62,9 +46,6 @@ export default function NewIssueDialog({
               className="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Short description of the issue"
             />
-            {state.errors?.title && (
-              <p className="text-xs text-red-500 mt-1">{state.errors.title[0]}</p>
-            )}
           </div>
 
           <div>
@@ -141,6 +122,4 @@ export default function NewIssueDialog({
       </div>
     </div>
   )
-
-  return createPortal(content, document.body)
 }

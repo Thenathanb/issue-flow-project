@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { deleteIssue } from '@/lib/actions'
 import { toast } from 'sonner'
 
 export default function DeleteIssueButton({
@@ -18,12 +17,10 @@ export default function DeleteIssueButton({
 
   async function handleDelete() {
     setPending(true)
-    const result = await deleteIssue(id)
-    if (result.success) {
-      toast.success(result.message)
-      if (redirectTo) {
-        router.push(redirectTo)
-      }
+    await new Promise((resolve) => setTimeout(resolve, 250))
+    toast.success('Issue deleted in demo mode')
+    if (redirectTo) {
+      router.push(redirectTo)
     }
     setPending(false)
     setConfirming(false)
@@ -53,6 +50,7 @@ export default function DeleteIssueButton({
   return (
     <button
       onClick={() => setConfirming(true)}
+      data-issue-id={id}
       className="text-xs text-red-500 hover:text-red-700"
     >
       Delete

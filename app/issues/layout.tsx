@@ -1,18 +1,21 @@
-import { auth } from '@/lib/auth'
-import { redirect } from 'next/navigation'
 import Sidebar from '@/components/sidebar'
 
-export default async function IssuesLayout({
+const demoUser = {
+  id: "demo-user",
+  name: "Demo User",
+  email: "demo@example.com",
+  emailVerified: null,
+  image: null,
+};
+
+export default function IssuesLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const session = await auth()
-  if (!session) redirect('/login')
-
   return (
     <div className="flex min-h-screen">
-      <Sidebar user={session.user} />
+      <Sidebar user={demoUser} />
       <main className="flex-1 overflow-auto">
         {children}
       </main>

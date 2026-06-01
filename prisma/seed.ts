@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client'
+import type { Prisma } from '@prisma/client'
 import bcrypt from 'bcryptjs'
 
 const prisma = new PrismaClient()
@@ -24,21 +25,21 @@ async function main() {
     },
   })
 
-  const issues = [
-    { title: 'Login page crashes on mobile Safari',  status: 'OPiN',        priority: 'HIGH',   createdById: alice.id, assignedToId: bob.id   },
-    { title: 'Dashboard charts not loading',         status: 'IN_PROGRESS', priority: 'HIGH',   createdById: bob.id,   assignedToId: alice.id },
-    { title: 'Export to CSV missing headers',        status: 'OPEN',        priority: 'MEDIUM', createdById: alice.id, assignedToId: null     },
-    { title: 'Dark mode toggle resets on refresh',   status: 'OPEN',        priority: 'LOW',    createdById: bob.id,   assignedToId: bob.id   },
-    { title: 'Search returns wrong results',         status: 'IN_PROGRESS', priority: 'HIGH',   createdById: alice.id, assignedToId: alice.id },
-    { title: 'Email notifications not sending',      status: 'CLOSED',      priority: 'HIGH',   createdById: bob.id,   assignedToId: bob.id   },
-    { title: 'User avatar not uploading',            status: 'OPEN',        priority: 'MEDIUM', createdById: alice.id, assignedToId: null     },
-    { title: 'Pagination breaks at page 10+',        status: 'CLOSED',      priority: 'MEDIUM', createdById: bob.id,   assignedToId: alice.id },
-    { title: 'Password reset link expires too fast', status: 'OPEN',        priority: 'LOW',    createdById: alice.id, assignedToId: null     },
-    { title: 'API rate limit errors in production',  status: 'IN_PROGRESS', priority: 'HIGH',   createdById: bob.id,   assignedToId: alice.id },
+  const issues: Prisma.IssueCreateInput[] = [
+    { title: 'Login page crashes on mobile Safari',  status: 'OPEN',        priority: 'HIGH',   createdBy: { connect: { id: alice.id } }, assignedTo: { connect: { id: bob.id } } },
+    { title: 'Dashboard charts not loading',         status: 'IN_PROGRESS', priority: 'HIGH',   createdBy: { connect: { id: bob.id } },   assignedTo: { connect: { id: alice.id } } },
+    { title: 'Export to CSV missing headers',        status: 'OPEN',        priority: 'MEDIUM', createdBy: { connect: { id: alice.id } } },
+    { title: 'Dark mode toggle resets on refresh',   status: 'OPEN',        priority: 'LOW',    createdBy: { connect: { id: bob.id } },   assignedTo: { connect: { id: bob.id } } },
+    { title: 'Search returns wrong results',         status: 'IN_PROGRESS', priority: 'HIGH',   createdBy: { connect: { id: alice.id } }, assignedTo: { connect: { id: alice.id } } },
+    { title: 'Email notifications not sending',      status: 'CLOSED',      priority: 'HIGH',   createdBy: { connect: { id: bob.id } },   assignedTo: { connect: { id: bob.id } } },
+    { title: 'User avatar not uploading',            status: 'OPEN',        priority: 'MEDIUM', createdBy: { connect: { id: alice.id } } },
+    { title: 'Pagination breaks at page 10+',        status: 'CLOSED',      priority: 'MEDIUM', createdBy: { connect: { id: bob.id } },   assignedTo: { connect: { id: alice.id } } },
+    { title: 'Password reset link expires too fast', status: 'OPEN',        priority: 'LOW',    createdBy: { connect: { id: alice.id } } },
+    { title: 'API rate limit errors in production',  status: 'IN_PROGRESS', priority: 'HIGH',   createdBy: { connect: { id: bob.id } },   assignedTo: { connect: { id: alice.id } } },
   ]
 
   for (const issue of issues) {
-    await prisma.issue.create({ data: issue as any })
+    await prisma.issue.create({ data: issue })
   }
 
   console.log('✓ Seeded 2 users and 10 issues')
