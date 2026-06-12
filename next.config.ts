@@ -5,6 +5,10 @@ const nextConfig: NextConfig = {
   basePath: "/issue-flow-project",
   images: {
     unoptimized: true,
+    remotePatterns: [
+      { protocol: 'https', hostname: 'lh3.googleusercontent.com' },
+      { protocol: 'https', hostname: 'avatars.githubusercontent.com' },
+    ],
   },
   trailingSlash: true,
 };

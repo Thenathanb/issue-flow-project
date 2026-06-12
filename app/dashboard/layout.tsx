@@ -1,21 +1,37 @@
-import Sidebar from '@/components/sidebar'
+'use client'
 
-const demoUser = {
-  id: "demo-user",
-  name: "Demo User",
-  email: "demo@example.com",
-  emailVerified: null,
-  image: null,
-};
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { useAuth } from '@/lib/auth-context'
+import Sidebar from '@/components/sidebar'
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const { user, loading } = useAuth()
+  const router = useRouter()
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.replace('/login')
+    }
+  }, [user, loading, router])
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-sm text-gray-400">Loading…</div>
+      </div>
+    )
+  }
+
+  if (!user) return null
+
   return (
     <div className="flex min-h-screen">
-      <Sidebar user={demoUser} />
+      <Sidebar user={{ name: user.displayName || user.email, photoURL: user.photoURL }} />
       <main className="flex-1 overflow-auto">
         {children}
       </main>
